@@ -289,42 +289,42 @@ echo "- Send the funds to: 2MvM2nZjueT9qQJgZh7LBPoudS554B6arQc"
 echo ""
 
 # For the exercise, we'll assume the first transaction's TXID is the one created above in challenge 4 ($RAW_TX)
-PARENT_TXID=
+PARENT_TXID=$(echo "$DECODED_TX" | jq .txid)
 check_cmd "Parent TXID extraction" "PARENT_TXID" "$PARENT_TXID"
 echo "Parent transaction ID: $PARENT_TXID"
 
 # STUDENT TASK: Identify the change output index from the parent transaction
 # WRITE YOUR SOLUTION BELOW:
-CHANGE_OUTPUT_INDEX=
+CHANGE_OUTPUT_INDEX=$(echo "$DECODED_TX" |  jq  '.vout[1].n')
 check_cmd "Change output identification" "CHANGE_OUTPUT_INDEX" "$CHANGE_OUTPUT_INDEX"
 
 # STUDENT TASK: Create the input JSON structure for the child transaction
 # WRITE YOUR SOLUTION BELOW:
-CHILD_INPUTS=
+CHILD_INPUTS="[{\"txid\":$PARENT_TXID,\"vout\":$CHANGE_OUTPUT_INDEX}]"
 check_cmd "Child input creation" "CHILD_INPUTS" "$CHILD_INPUTS"
 
 # STUDENT TASK: Calculate fees, allowing for a high fee to help the parent transaction
-CHILD_TX_SIZE=
+CHILD_TX_SIZE=$(echo "68 + 31 * 1" |  bc -l)
 check_cmd "Child transaction size calculation" "CHILD_TX_SIZE" "$CHILD_TX_SIZE"
 
 CHILD_FEE_RATE=20 # satoshis/vbyte
-CHILD_FEE_SATS=
+CHILD_FEE_SATS=$(echo "$CHILD_TX_SIZE * $CHILD_FEE_RATE" | bc -l)
 check_cmd "Child fee calculation" "CHILD_FEE_SATS" "$CHILD_FEE_SATS"
 
 # Calculate the amount to send after deducting fee
 CHILD_RECIPIENT="2MvM2nZjueT9qQJgZh7LBPoudS554B6arQc"
-CHILD_SEND_AMOUNT=
+CHILD_SEND_AMOUNT=$(echo "$DECODED_TX" |  jq -r --argjson fee "$CHILD_FEE_SATS" '.vout[1].value * 100000000 - $fee')
 check_cmd "Child amount calculation" "CHILD_SEND_AMOUNT" "$CHILD_SEND_AMOUNT"
 
 # Convert to BTC
-CHILD_SEND_BTC=
+CHILD_SEND_BTC=$(echo "scale=8; $CHILD_SEND_AMOUNT / 100000000" | bc | xargs printf "%.8f")
 
-# STUDENT TASK: Create the outputs JSON structure
-CHILD_OUTPUTS=
+# STUDENT TASK: Cr
+CHILD_OUTPUTS="[{\"$CHILD_RECIPIENT\":$CHILD_SEND_BTC}]"
 check_cmd "Child output creation" "CHILD_OUTPUTS" "$CHILD_OUTPUTS"
 
 # STUDENT TASK: Create the raw child transaction
-CHILD_RAW_TX=
+CHILD_RAW_TX=$(bitcoin-cli -regtest createrawtransaction $CHILD_INPUTS  $CHILD_OUTPUTS )
 check_cmd "Child transaction creation" "CHILD_RAW_TX" "$CHILD_RAW_TX"
 
 echo "Successfully created child transaction with higher fee!"

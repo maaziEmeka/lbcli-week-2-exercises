@@ -90,10 +90,10 @@ echo ""
 # STUDENT TASK: Extract the available UTXOs from the decoded transaction for spending
 # WRITE YOUR SOLUTION BELOW:
 UTXO_TXID=$TXID
-UTXO_VOUT_INDEX=
+UTXO_VOUT_INDEX=$(echo "$DECODED_TX" |  jq  '.vout[0].n')
 check_cmd "UTXO vout selection" "UTXO_VOUT_INDEX" "$UTXO_VOUT_INDEX"
 
-UTXO_VALUE=
+UTXO_VALUE=$(echo "$DECODED_TX" |  jq  '.vout[0].value * 100000000 | floor')
 check_cmd "UTXO value extraction" "UTXO_VALUE" "$UTXO_VALUE"
 
 echo "Selected UTXO:"

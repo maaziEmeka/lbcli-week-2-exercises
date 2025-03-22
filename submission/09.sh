@@ -346,13 +346,14 @@ echo "- Sends funds to: bcrt1qxhy8dnae50nwkg6xfmjtedgs6augk5edj2tm3e"
 echo ""
 
 # Decode the secondary transaction (SECONDARY_TX) to get its TXID
-SECONDARY_TXID=
+DECODED_TX=$(bitcoin-cli -regtest decoderawtransaction $SECONDARY_TX )
+SECONDARY_TXID=$(echo "$DECODED_TX" | jq -r .txid)
 check_cmd "Secondary TXID extraction" "SECONDARY_TXID" "$SECONDARY_TXID"
 echo "Secondary transaction ID: $SECONDARY_TXID"
 
 # STUDENT TASK: Create the input JSON structure with a 10-block relative timelock
 # WRITE YOUR SOLUTION BELOW:
-TIMELOCK_INPUTS=
+TIMELOCK_INPUTS="[{\"txid\":\"$SECONDARY_TXID\",\"vout\":0,\"sequence\":10},{\"txid\":\"$SECONDARY_TXID\",\"vout\":1,\"sequence\":10}]"
 check_cmd "Timelock input creation" "TIMELOCK_INPUTS" "$TIMELOCK_INPUTS"
 
 # Recipient address for timelock funds
@@ -360,22 +361,22 @@ TIMELOCK_ADDRESS="bcrt1qxhy8dnae50nwkg6xfmjtedgs6augk5edj2tm3e"
 
 # STUDENT TASK: Calculate the amount to send (use the output value from SECONDARY_TX, minus a fee)
 # Hint: Extract the output value from the secondary TX first
-SECONDARY_OUTPUT_VALUE=
+SECONDARY_OUTPUT_VALUE=$(echo "$DECODED_TX" |  jq -r   '[.vout[] | .value] | add * 100000000 ')
 check_cmd "Secondary output value extraction" "SECONDARY_OUTPUT_VALUE" "$SECONDARY_OUTPUT_VALUE"
 
 TIMELOCK_FEE=1000 # Use a simple fee of 1000 satoshis for this exercise
-TIMELOCK_AMOUNT=
+TIMELOCK_AMOUNT=$(echo "$SECONDARY_OUTPUT_VALUE - $TIMELOCK_FEE" | bc )
 check_cmd "Timelock amount calculation" "TIMELOCK_AMOUNT" "$TIMELOCK_AMOUNT"
 
 # Convert to BTC
-TIMELOCK_BTC=
+TIMELOCK_BTC=$(echo "scale=8; $TIMELOCK_AMOUNT / 100000000" | bc | xargs printf "%.8f")
 
 # STUDENT TASK: Create the outputs JSON structure
-TIMELOCK_OUTPUTS=
+TIMELOCK_OUTPUTS="[{\"$TIMELOCK_ADDRESS\":$TIMELOCK_BTC}]"
 check_cmd "Timelock output creation" "TIMELOCK_OUTPUTS" "$TIMELOCK_OUTPUTS"
 
 # STUDENT TASK: Create the raw transaction with timelock
-TIMELOCK_TX=
+TIMELOCK_TX=$(bitcoin-cli -regtest createrawtransaction $TIMELOCK_INPUTS  $TIMELOCK_OUTPUTS )
 check_cmd "Timelock transaction creation" "TIMELOCK_TX" "$TIMELOCK_TX"
 
 echo "Successfully created transaction with 10-block relative timelock!"

@@ -8,13 +8,13 @@ DECODED_TX=$(bitcoin-cli -regtest decoderawtransaction $raw_tx)
 
 TXID=$( echo $DECODED_TX | jq -r .txid )
 
-SEND_ADDR="2MvLcssW49n9atmksjwg2ZCMsEMsoj3pzUP"
+RECIPIENT="2MvLcssW49n9atmksjwg2ZCMsEMsoj3pzUP"
 
 AMOUNT=0.20000000
 
 TX_INPUT="[{\"txid\":\"$TXID\",\"vout\":0},{\"txid\":\"$TXID\",\"vout\":1}]"
 
-TX_OUTPUT="[{\"$SEND_ADDR\":$AMOUNT}]"
+TX_OUTPUT="[{\"$RECIPIENT\":$AMOUNT}]"
 
 TX_HEX=$(bitcoin-cli -regtest createrawtransaction $TX_INPUT  $TX_OUTPUT)
 
